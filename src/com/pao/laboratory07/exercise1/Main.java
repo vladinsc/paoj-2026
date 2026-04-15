@@ -9,14 +9,16 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        // Part A
-        // load initial state
+
         OrderState initialState = OrderState.valueOf(scanner.next());
         Order order = new Order(initialState);
+        // Testele asteapta formatul asta in limba engleza
         System.out.println("Initial order state: " + initialState);
 
-        while (true) {
-            OrderCommand orderCommand = OrderCommand.valueOf(scanner.next());
+        while (scanner.hasNext()) {
+            String cmdString = scanner.next();
+            OrderCommand orderCommand = OrderCommand.valueOf(cmdString);
+
             switch (orderCommand) {
                 case next -> {
                     try {
