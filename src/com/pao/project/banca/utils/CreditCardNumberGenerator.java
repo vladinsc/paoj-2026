@@ -1,7 +1,6 @@
 package com.pao.project.banca.utils;
 
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class CreditCardNumberGenerator {
 
@@ -22,7 +21,7 @@ public class CreditCardNumberGenerator {
         return (sum % 10 == 0);
     }
 
-    public static String generator(){
+    public static String generateCreditCardNumber(){
         StringBuilder sb;
         do {
             sb = new StringBuilder();

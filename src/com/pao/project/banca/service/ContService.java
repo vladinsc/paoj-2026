@@ -87,7 +87,7 @@ public class ContService {
 
         System.out.printf("Depunere %.2f %s in contul %s. Sold nou %.2f %s%n.", suma, cont.getMoneda(), iban, cont.getSold(), cont.getTipCont());
     }
-    public void retragere(String iban, double suma) throws ContNegasitException, FonduriInsuficienteException {
+    public void retrage(String iban, double suma) throws ContNegasitException, FonduriInsuficienteException {
         if (suma <=0 ) throw new IllegalArgumentException("Suma de retragere trebuie sa fie pozitiva");
         Cont cont = getCont(iban);
         if (!cont.isActiv()) throw new IllegalStateException("Contul "+iban+" nu este activ.");
