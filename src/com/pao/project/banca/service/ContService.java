@@ -151,5 +151,4 @@ public class ContService {
         Cont cont = getCont(iban);
         return cont.getTranzactii();
     }
-
 }
