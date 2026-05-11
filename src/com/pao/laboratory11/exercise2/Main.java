@@ -17,7 +17,7 @@ public class Main {
         try {
             run();
         } catch (IOException e) {
-            // Keep deterministic checker output.
+
         }
     }
 
@@ -65,7 +65,7 @@ public class Main {
             switch (op) {
                 case "REPORT_MONTH": {
                     String month = p[1];
-                    // Folosim Stream API si summarizingDouble pentru a obtine atat suma cat si count-ul simultan
+
                     DoubleSummaryStatistics stats = txs.stream()
                             .filter(tx -> tx.date.startsWith(month))
                             .collect(Collectors.summarizingDouble(tx -> tx.amount));
@@ -77,7 +77,7 @@ public class Main {
 
                 case "REPORT_ACCOUNT": {
                     String account = p[1];
-                    // Folosim Stream API similar cu REPORT_MONTH
+
                     DoubleSummaryStatistics stats = txs.stream()
                             .filter(tx -> tx.account.equals(account))
                             .collect(Collectors.summarizingDouble(tx -> tx.amount));
@@ -93,7 +93,7 @@ public class Main {
                     if (txs.isEmpty()) {
                         System.out.println("NONE");
                     } else {
-                        // Folosim Stream API pentru grupare, numarare, sortare si limitare
+
                         txs.stream()
                                 .collect(Collectors.groupingBy(tx -> tx.channel, Collectors.counting()))
                                 .entrySet().stream()
@@ -107,7 +107,7 @@ public class Main {
                 }
 
                 default:
-                    // Ignoram comenzile necunoscute, conform cerintei testelor.
+                    // Ignoram comenzile necunoscute
                     break;
             }
         }
