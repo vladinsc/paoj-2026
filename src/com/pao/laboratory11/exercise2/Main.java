@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.DoubleSummaryStatistics;
 import java.util.stream.Collectors;
+import com.pao.laboratory11.exercise1.Transaction;
 
 public class Main {
     public static void main(String[] args) {
@@ -30,7 +31,7 @@ public class Main {
         }
 
         int n = Integer.parseInt(first);
-        List<Tx> txs = new ArrayList<>();
+        List<Transaction> txs = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             String line = nextNonEmpty(br);
             if (line == null) {
@@ -38,7 +39,7 @@ public class Main {
             }
 
             String[] p = line.split("\\s+");
-            txs.add(new Tx(
+            txs.add(new Transaction(
                     Integer.parseInt(p[0]),
                     Double.parseDouble(p[1]),
                     p[2],
@@ -76,14 +77,14 @@ public class Main {
                 }
 
                 case "REPORT_ACCOUNT": {
-                    String account = p[1];
+                    String accountId = p[1];
 
                     DoubleSummaryStatistics stats = txs.stream()
-                            .filter(tx -> tx.account.equals(account))
+                            .filter(tx -> tx.accountId.equals(accountId))
                             .collect(Collectors.summarizingDouble(tx -> tx.amount));
 
                     System.out.printf(Locale.US, "ACCOUNT %s total=%.2f count=%d%n",
-                            account, stats.getSum(), stats.getCount());
+                            accountId, stats.getSum(), stats.getCount());
                     break;
                 }
 
@@ -121,23 +122,5 @@ public class Main {
             }
         }
         return null;
-    }
-
-    private static final class Tx {
-        public final int id;
-        public final double amount;
-        public final String date;
-        public final String country;
-        public final String channel;
-        public final String account;
-
-        private Tx(int id, double amount, String date, String country, String channel, String account) {
-            this.id = id;
-            this.amount = amount;
-            this.date = date;
-            this.country = country;
-            this.channel = channel;
-            this.account = account;
-        }
     }
 }
