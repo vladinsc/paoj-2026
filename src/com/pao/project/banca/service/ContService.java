@@ -4,9 +4,13 @@ import com.pao.project.banca.exceptions.ClientNegasitException;
 import com.pao.project.banca.exceptions.ContNegasitException;
 import com.pao.project.banca.exceptions.FonduriInsuficienteException;
 import com.pao.project.banca.models.*;
+import com.pao.project.banca.repository.ContRepository;
+import com.pao.project.banca.repository.TranzactieRepository;
 import com.pao.project.banca.utils.IbanGenerator;
 import com.pao.project.banca.utils.UuidGenerator;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +19,9 @@ import java.util.stream.Collectors;
 
 public class ContService {
     private static ContService instance;
+    private final ContRepository contRepository = new ContRepository();
+    private final TranzactieRepository tranzactieRepository = new TranzactieRepository();
+
     private ContService() {}
     public static ContService getInstance() {
         if (instance == null) {
@@ -23,43 +30,38 @@ public class ContService {
         return instance;
     }
 
-    private final Map<String, Cont> conturiDupaIban= new HashMap<>();
-
     public Cont deschideCont(String idClient, String tipCont, Moneda moneda, String PREFIX_BANCA) throws ClientNegasitException {
+        AuditService.getInstance().logAction("deschide_cont");
         ClientService clientService = ClientService.getInstance();
         clientService.cautaDupaId(idClient);
 
         String iban = IbanGenerator.genereazaIban(PREFIX_BANCA);
+        String numeBanca = PREFIX_BANCA; // Using the prefix as the bank name for now
 
         Cont cont;
         if ("ECONOMII".equalsIgnoreCase(tipCont)) {
-            cont = new ContEconomii(iban, idClient, moneda);
+            cont = new ContEconomii(iban, idClient, moneda, numeBanca);
         }
         else {
-            cont = new ContCurent(iban, idClient, moneda);
+            cont = new ContCurent(iban, idClient, moneda, numeBanca);
         }
-        conturiDupaIban.put(iban, cont);
-        clientService.asociazaCont(idClient, iban);
+        contRepository.save(cont);
         System.out.println("Cont deschis: " + cont.getTipCont() + " | IBAN: " + iban);
         return cont;
     }
     public Cont getCont(String iban) throws ContNegasitException {
-        Cont cont = conturiDupaIban.get(iban);
-        if (cont == null) {
-            throw new ContNegasitException(iban);
-        }
-        return cont;
+        return contRepository.findById(iban).orElseThrow(() -> new ContNegasitException(iban));
     }
     public void stergeCont(String iban) throws ContNegasitException {
         getCont(iban);
-        conturiDupaIban.remove(iban);
+        contRepository.delete(iban);
         System.out.println("Cont inchis: " + iban);
     }
     public List<Cont> listeazaToate() {
-        return new ArrayList<>(conturiDupaIban.values());
+        return contRepository.findAll();
     }
     public List<Cont> listeazaConturiClient(String idClient) {
-        return conturiDupaIban.values().stream()
+        return contRepository.findAll().stream()
                 .filter(c -> c.getIdClient().equals(idClient))
                 .collect(Collectors.toList());
     }
@@ -69,11 +71,13 @@ public class ContService {
     */
 
     public void depune(String iban, double suma) throws ContNegasitException {
+        AuditService.getInstance().logAction("depunere_numerar");
         if (suma <= 0) throw new IllegalArgumentException("Suma de depus trebuie sa fie pozitiva");
         Cont cont = getCont(iban);
         if (!cont.isActiv()) throw new IllegalStateException("Contul "+iban+" nu este activ.");
 
         cont.setSold(cont.getSold() + suma);
+        contRepository.update(cont);
 
         Tranzactie t = new Tranzactie(
                 UuidGenerator.generateTranzactieID(),
@@ -83,11 +87,12 @@ public class ContService {
                 TipTranzactie.DEPUNERE,
                 TipTranzactie.DEPUNERE.getDescriere()
         );
-        cont.adaugaTranzactie(t);
+        tranzactieRepository.save(t);
 
         System.out.printf("Depunere %.2f %s in contul %s. Sold nou %.2f %s%n.", suma, cont.getMoneda(), iban, cont.getSold(), cont.getTipCont());
     }
     public void retrage(String iban, double suma) throws ContNegasitException, FonduriInsuficienteException {
+        AuditService.getInstance().logAction("retragere_numerar");
         if (suma <=0 ) throw new IllegalArgumentException("Suma de retragere trebuie sa fie pozitiva");
         Cont cont = getCont(iban);
         if (!cont.isActiv()) throw new IllegalStateException("Contul "+iban+" nu este activ.");
@@ -100,6 +105,8 @@ public class ContService {
         if(suma > disponibil) throw new FonduriInsuficienteException(disponibil, suma);
 
         cont.setSold(cont.getSold() - suma);
+        contRepository.update(cont);
+
         Tranzactie t = new Tranzactie(
                 UuidGenerator.generateTranzactieID(),
                 iban,
@@ -108,10 +115,11 @@ public class ContService {
                 TipTranzactie.RETRAGERE,
                 TipTranzactie.RETRAGERE.getDescriere()
         );
-        cont.adaugaTranzactie(t);
+        tranzactieRepository.save(t);
         System.out.printf("Retragere %.2f %s din contul %s. Sold nou %.2f %s %n", suma, cont.getMoneda(), iban, cont.getSold(), cont.getMoneda());
     }
     public void transfera(String ibanSursa, String ibanDestinatie, double suma) throws ContNegasitException, FonduriInsuficienteException {
+        AuditService.getInstance().logAction("transfer_bancar");
         if (ibanSursa.equals(ibanDestinatie)) {
             throw new IllegalArgumentException("Sursa si destinatia transferului nu pot fi identice.");
         }
@@ -129,26 +137,49 @@ public class ContService {
 
         if(suma > disponibil) throw new FonduriInsuficienteException(disponibil, suma);
 
-        sursa.setSold(sursa.getSold() - suma);
-        dest.setSold(dest.getSold() + suma);
+        // JDBC Transaction
+        Connection conn = com.pao.project.banca.utils.DatabaseConnection.getInstance().getConnection();
+        try {
+            conn.setAutoCommit(false);
+            
+            sursa.setSold(sursa.getSold() - suma);
+            dest.setSold(dest.getSold() + suma);
+            
+            contRepository.update(sursa);
+            contRepository.update(dest);
 
-        String idTrx = UuidGenerator.generateTranzactieID();
-        String descriere = "Transfer intre conturi";
+            String descriere = "Transfer intre conturi";
 
-        sursa.adaugaTranzactie(new Tranzactie(idTrx, ibanSursa, ibanDestinatie,
-                suma, TipTranzactie.TRANSFER_TRIMIS, descriere));
-        dest.adaugaTranzactie(new Tranzactie(idTrx, ibanSursa, ibanDestinatie,
-                suma, TipTranzactie.TRANSFER_PRIMIT, descriere));
+            tranzactieRepository.save(new Tranzactie(UuidGenerator.generateTranzactieID(), ibanSursa, ibanDestinatie,
+                    suma, TipTranzactie.TRANSFER_TRIMIS, descriere));
+            tranzactieRepository.save(new Tranzactie(UuidGenerator.generateTranzactieID(), ibanSursa, ibanDestinatie,
+                    suma, TipTranzactie.TRANSFER_PRIMIT, descriere));
 
-        System.out.printf("Transfer %.2f %s: %s -> %s%n", suma,sursa.getMoneda(), ibanSursa, ibanDestinatie);
+            conn.commit();
+            System.out.printf("Transfer %.2f %s: %s -> %s [TRANZACTIE REUSITA]%n", suma, sursa.getMoneda(), ibanSursa, ibanDestinatie);
+        } catch (SQLException e) {
+            try {
+                conn.rollback();
+                System.err.println("Tranzactie esuata. Rollback executat: " + e.getMessage());
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        } finally {
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
     public double getSold(String iban) throws ContNegasitException {
+        AuditService.getInstance().logAction("interogare_sold");
         Cont cont = getCont(iban);
         System.out.printf("Sold cont %s: %.2f %s%n", iban, cont.getSold(), cont.getMoneda());
         return cont.getSold();
     }
     public List<Tranzactie> getExtrasDeCont(String iban) throws ContNegasitException {
-        Cont cont = getCont(iban);
-        return cont.getTranzactii();
+        AuditService.getInstance().logAction("extras_cont");
+        return tranzactieRepository.findByIban(iban);
     }
 }

@@ -2,6 +2,7 @@ package com.pao.project.banca.service;
 
 import com.pao.project.banca.exceptions.ContNegasitException;
 import com.pao.project.banca.models.Card;
+import com.pao.project.banca.repository.CardRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -10,6 +11,8 @@ import static com.pao.project.banca.utils.CreditCardNumberGenerator.generateCred
 
 public class CardService {
     private static CardService instance;
+    private final CardRepository cardRepository = new CardRepository();
+
     private CardService() {}
     public static CardService getInstance() {
         if (instance == null) {
@@ -17,20 +20,17 @@ public class CardService {
         }
         return instance;
     }
-    private final Map<String, Card> carduriDupaNumar = new HashMap<>();
-    private final Map<String, List<Card>>  carduriDupaIban  = new HashMap<>();
 
     public Card emiteCard(String iban,String PIN ,Card.TipCard tipCard, String numeDetinator)
             throws ContNegasitException {
-
+        AuditService.getInstance().logAction("emite_card");
 
         ContService.getInstance().getCont(iban);
 
         String numarCard = generateCreditCardNumber();
         Card card = new Card(numarCard, iban, PIN ,tipCard, numeDetinator);
 
-        carduriDupaNumar.put(numarCard, card);
-        carduriDupaIban.computeIfAbsent(iban, k -> new ArrayList<>()).add(card);
+        cardRepository.save(card);
 
         System.out.println("Card emis: " + card.getNumarMascat()
                 + " [" + tipCard + "] pentru contul " + iban);
@@ -38,23 +38,24 @@ public class CardService {
     }
 
     public Card getCard(String numarCard) {
-        Card card = carduriDupaNumar.get(numarCard);
-        if (card == null) {
-            throw new NoSuchElementException("Cardul cu numarul " + numarCard + " nu a fost gasit.");
-        }
-        return card;
+        return cardRepository.findById(numarCard).orElseThrow(() -> 
+            new NoSuchElementException("Cardul cu numarul " + numarCard + " nu a fost gasit."));
     }
 
     public void blocheazaCard(String numarCard) {
+        AuditService.getInstance().logAction("blocare_card");
         Card card = getCard(numarCard);
         card.setStatus(Card.StatusCard.BLOCAT);
+        cardRepository.update(card);
         System.out.println("Card blocat: " + card.getNumarMascat());
     }
 
     public void deblocheazaCard(String numarCard) {
+        AuditService.getInstance().logAction("deblocare_card");
         Card card = getCard(numarCard);
         if (card.getStatus() == Card.StatusCard.BLOCAT) {
             card.setStatus(Card.StatusCard.ACTIV);
+            cardRepository.update(card);
             System.out.println("Card deblocat: " + card.getNumarMascat());
         } else {
             System.out.println("Cardul nu era blocat.");
@@ -62,16 +63,18 @@ public class CardService {
     }
 
     public List<Card> getCarduriPentruCont(String iban) {
-        return carduriDupaIban.getOrDefault(iban, Collections.emptyList());
+        return cardRepository.findAll().stream()
+                .filter(c -> c.getIban().equals(iban))
+                .collect(Collectors.toList());
     }
 
     public List<Card> getCarduriActive() {
-        return carduriDupaNumar.values().stream()
+        return cardRepository.findAll().stream()
                 .filter(Card::isActiv)
                 .collect(Collectors.toList());
     }
 
     public int getNrCarduri() {
-        return carduriDupaNumar.size();
+        return cardRepository.findAll().size();
     }
 }

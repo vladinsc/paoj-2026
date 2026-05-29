@@ -1,4 +1,4 @@
-# Proiect Individual — Programare Avansată pe Obiecte în Java (2026)
+care# Proiect Individual — Programare Avansată pe Obiecte în Java (2026)
 
 > **Pondere în nota finală: 25%**
 > Fiecare student lucrează la un proiect individual, dezvoltat în două etape pe parcursul semestrului.

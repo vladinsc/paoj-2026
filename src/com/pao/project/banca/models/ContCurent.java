@@ -2,17 +2,17 @@ package com.pao.project.banca.models;
 
 import static com.pao.project.banca.models.Moneda.RON;
 
-public class ContCurent extends Cont{
+public class ContCurent extends Cont {
     private double limitaOverdraft;
     private double comisionAdministrare;
 
-    public ContCurent(String iban, String idClient, Moneda moneda,double limitaOverdraft, double comisionAdministrare) {
-        super(iban, idClient, moneda);
+    public ContCurent(String iban, String idClient, Moneda moneda, String numeBanca, double limitaOverdraft, double comisionAdministrare) {
+        super(iban, idClient, moneda, numeBanca);
         this.limitaOverdraft = limitaOverdraft;
         this.comisionAdministrare = comisionAdministrare;
     }
-    public ContCurent(String iban, String idClient, Moneda moneda) {
-        super(iban, idClient, moneda);
+    public ContCurent(String iban, String idClient, Moneda moneda, String numeBanca) {
+        super(iban, idClient, moneda, numeBanca);
         this.limitaOverdraft = 0.0;
         this.comisionAdministrare = 50.0;
     }
@@ -40,8 +40,10 @@ public class ContCurent extends Cont{
     public double getSoldDisponibil() {
         return sold + limitaOverdraft;
     }
+    
+    @Override
     public String toString() {
-        return String.format("[CONT CURENT] IBAN: %s | Sold: %.2f RON | Overdraft: %.2f RON | Disponibil: %.2f RON | Activ: %s",
-                iban, sold, limitaOverdraft, getSoldDisponibil(), activ ? "DA" : "NU");
+        return String.format("[CONT CURENT] IBAN: %s | Sold: %.2f %s | Overdraft: %.2f %s | Disponibil: %.2f %s | Activ: %s | Banca: %s",
+                iban, sold, moneda, limitaOverdraft, moneda, getSoldDisponibil(), moneda, activ ? "DA" : "NU", numeBanca);
     }
 }

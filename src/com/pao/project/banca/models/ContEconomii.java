@@ -4,14 +4,14 @@ public class ContEconomii extends Cont {
     private double rataDobandaAnuala;
     private double sumaMinimaObligatorie;
 
-    public ContEconomii(String iban, String idClient, Moneda moneda) {
-        super(iban, idClient, moneda);
+    public ContEconomii(String iban, String idClient, Moneda moneda, String numeBanca) {
+        super(iban, idClient, moneda, numeBanca);
         this.rataDobandaAnuala = 5.5;
         this.sumaMinimaObligatorie = 2500.0;
     }
 
-    public ContEconomii(String iban, String idClient, Moneda moneda, double rataDobandaAnuala, double sumaMinimaObligatorie) {
-        super(iban, idClient, moneda);
+    public ContEconomii(String iban, String idClient, Moneda moneda, String numeBanca, double rataDobandaAnuala, double sumaMinimaObligatorie) {
+        super(iban, idClient, moneda, numeBanca);
         this.rataDobandaAnuala = rataDobandaAnuala;
         this.sumaMinimaObligatorie = sumaMinimaObligatorie;
     }
@@ -30,9 +30,10 @@ public class ContEconomii extends Cont {
     public double getSumaMinimaObligatorie()   { return sumaMinimaObligatorie; }
     public void setRataDobandaAnuala(double rata)       { this.rataDobandaAnuala = rata; }
     public void setSumaMinimaObligatorie(double suma)   { this.sumaMinimaObligatorie = suma; }
+    
     @Override
     public String toString() {
-        return String.format("[CONT ECONOMII] IBAN: %s | Sold: %.2f RON | Dobanda: %.2f%% | Dobanda anuala estimata: %.2f RON | Activ: %s",
-                iban, sold, rataDobandaAnuala, calculeazaDobanda(), activ ? "DA" : "NU");
+        return String.format("[CONT ECONOMII] IBAN: %s | Sold: %.2f %s | Dobanda: %.2f%% | Dobanda anuala estimata: %.2f %s | Activ: %s | Banca: %s",
+                iban, sold, moneda, rataDobandaAnuala, calculeazaDobanda(), moneda, activ ? "DA" : "NU", numeBanca);
     }
 }

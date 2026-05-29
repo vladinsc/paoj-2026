@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
 public abstract class Cont {
     protected String iban;
     protected double sold;
@@ -11,22 +12,22 @@ public abstract class Cont {
     protected LocalDate dataCreare;
     protected boolean activ;
     protected Moneda moneda;
+    protected String numeBanca;
     protected final List<Tranzactie> tranzactii;
 
-    public Cont (String iban,String idClient,Moneda moneda) {
+    public Cont (String iban, String idClient, Moneda moneda, String numeBanca) {
         this.iban = iban;
         this.idClient = idClient;
         this.moneda = moneda;
+        this.numeBanca = numeBanca;
         this.dataCreare = LocalDate.now();
         this.activ = true;
         this.tranzactii = new ArrayList<>();
         this.sold = 0.0;
-
     }
 
     public abstract String getTipCont();
-    //TODO
-    //public abstract double getTotalInOtherMoneda(Moneda moneda);
+
     public void adaugaTranzactie(Tranzactie t) {
         tranzactii.add(t);
     }
@@ -42,8 +43,10 @@ public abstract class Cont {
     public LocalDate getDataCreare(){ return dataCreare; }
     public boolean isActiv()        { return activ; }
     public String getMoneda()       { return moneda.toString(); }
+    public Moneda getMonedaEnum()   { return moneda; }
     public void setSold(double sold)   { this.sold = sold; }
     public void setActiv(boolean activ){ this.activ = activ; }
+    public String getNumeBanca()    { return numeBanca; }
 
     @Override
     public boolean equals(Object o) {
@@ -60,7 +63,7 @@ public abstract class Cont {
 
     @Override
     public String toString() {
-        return String.format("[%s] IBAN: %s | Sold: %.2f %s | Activ: %s | Creat: %s",
-                getTipCont(), iban, sold, moneda, activ ? "DA" : "NU", dataCreare);
+        return String.format("[%s] IBAN: %s | Sold: %.2f %s | Activ: %s | Creat: %s | Banca: %s",
+                getTipCont(), iban, sold, moneda, activ ? "DA" : "NU", dataCreare, numeBanca);
     }
 }

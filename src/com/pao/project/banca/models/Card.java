@@ -21,7 +21,7 @@ public class Card {
         this.numeDetinator = numeDetinator;
         this.dataExpirare = LocalDate.now().plusMonths(48);
         this.PIN = PIN;
-
+        this.statusCard = StatusCard.ACTIV;
     }
 
     public String getNumarCard()       { return numarCard; }
