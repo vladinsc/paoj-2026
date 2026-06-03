@@ -4,6 +4,7 @@ import com.pao.project.banca.models.TipTranzactie;
 import com.pao.project.banca.models.Tranzactie;
 import com.pao.project.banca.utils.DatabaseConnection;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,7 +16,8 @@ public class TranzactieRepository implements Repository<Tranzactie, String> {
     @Override
     public void save(Tranzactie entity) {
         String sql = "INSERT INTO tranzactii (id, iban_sursa, iban_destinatie, suma, tip_tranzactie, descriere) VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, entity.getId());
             pstmt.setString(2, entity.getIbanSursa());
             pstmt.setString(3, entity.getIbanDestinatie());
@@ -31,7 +33,8 @@ public class TranzactieRepository implements Repository<Tranzactie, String> {
     @Override
     public Optional<Tranzactie> findById(String id) {
         String sql = "SELECT * FROM tranzactii WHERE id = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -54,7 +57,8 @@ public class TranzactieRepository implements Repository<Tranzactie, String> {
     public List<Tranzactie> findByIban(String iban) {
         List<Tranzactie> tranzactii = new ArrayList<>();
         String sql = "SELECT * FROM tranzactii WHERE iban_sursa = ? OR iban_destinatie = ? ORDER BY timestamp DESC";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, iban);
             pstmt.setString(2, iban);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -79,7 +83,8 @@ public class TranzactieRepository implements Repository<Tranzactie, String> {
     public List<Tranzactie> findAll() {
         List<Tranzactie> tranzactii = new ArrayList<>();
         String sql = "SELECT * FROM tranzactii ORDER BY timestamp DESC";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 tranzactii.add(new Tranzactie(
@@ -103,7 +108,8 @@ public class TranzactieRepository implements Repository<Tranzactie, String> {
     @Override
     public void delete(String id) {
         String sql = "DELETE FROM tranzactii WHERE id = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {

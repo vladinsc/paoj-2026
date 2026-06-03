@@ -13,8 +13,8 @@ public class DatabaseInitializer {
             String schema = new String(Files.readAllBytes(Paths.get("src/com/pao/project/banca/resources/schema.sql")));
             String[] commands = schema.split(";");
             
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (Statement stmt = conn.createStatement()) {
+            try (Connection conn = DatabaseConnection.getInstance().getConnection();
+                 Statement stmt = conn.createStatement()) {
                 for (String command : commands) {
                     if (!command.trim().isEmpty()) {
                         stmt.execute(command);

@@ -9,34 +9,27 @@ import java.util.Properties;
 
 public class DatabaseConnection {
     private static DatabaseConnection instance;
-    private Connection connection;
+    private final Properties props = new Properties();
 
     private DatabaseConnection() {
-        Properties props = new Properties();
         try (FileInputStream fis = new FileInputStream("src/com/pao/project/banca/resources/db.properties")) {
             props.load(fis);
-            String url = props.getProperty("db.url");
-            String user = props.getProperty("db.user");
-            String password = props.getProperty("db.password");
-            this.connection = DriverManager.getConnection(url, user, password);
-        } catch (IOException | SQLException e) {
-            System.err.println("Error connecting to database: " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error loading database properties: " + e.getMessage());
         }
     }
 
     public static synchronized DatabaseConnection getInstance() {
-        try {
-            if (instance == null || instance.connection == null || instance.connection.isClosed()) {
-                instance = new DatabaseConnection();
-            }
-        } catch (SQLException e) {
-            System.err.println("Error checking connection status: " + e.getMessage());
+        if (instance == null) {
             instance = new DatabaseConnection();
         }
         return instance;
     }
 
-    public Connection getConnection() {
-        return connection;
+    public Connection getConnection() throws SQLException {
+        String url = props.getProperty("db.url");
+        String user = props.getProperty("db.user");
+        String password = props.getProperty("db.password");
+        return DriverManager.getConnection(url, user, password);
     }
 }

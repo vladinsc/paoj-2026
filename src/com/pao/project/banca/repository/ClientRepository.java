@@ -4,6 +4,7 @@ import com.pao.project.banca.models.Adresa;
 import com.pao.project.banca.models.Client;
 import com.pao.project.banca.utils.DatabaseConnection;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,7 +19,8 @@ public class ClientRepository implements Repository<Client, String> {
     public void save(Client entity) {
         String adresaId = adresaRepository.saveAndGetId(entity.getAdresa());
         String sql = "INSERT INTO clienti (id, nume, prenume, cnp, email, telefon, adresa_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, entity.getId());
             pstmt.setString(2, entity.getNume());
             pstmt.setString(3, entity.getPrenume());
@@ -61,7 +63,8 @@ public class ClientRepository implements Repository<Client, String> {
                      "FROM clienti c " +
                      "LEFT JOIN adrese a ON c.adresa_id = a.id " +
                      "WHERE c.id = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -79,7 +82,8 @@ public class ClientRepository implements Repository<Client, String> {
                      "FROM clienti c " +
                      "LEFT JOIN adrese a ON c.adresa_id = a.id " +
                      "WHERE c.cnp = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, cnp);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -98,7 +102,8 @@ public class ClientRepository implements Repository<Client, String> {
         String sql = "SELECT c.*, a.strada, a.numar, a.oras, a.judet, a.cod_postal, a.tara " +
                      "FROM clienti c " +
                      "LEFT JOIN adrese a ON c.adresa_id = a.id";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 clienti.add(mapResultSetToClient(rs));
@@ -112,7 +117,8 @@ public class ClientRepository implements Repository<Client, String> {
     @Override
     public void update(Client entity) {
         String sql = "UPDATE clienti SET nume = ?, prenume = ?, email = ?, telefon = ? WHERE id = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, entity.getNume());
             pstmt.setString(2, entity.getPrenume());
             pstmt.setString(3, entity.getEmail());
@@ -127,7 +133,8 @@ public class ClientRepository implements Repository<Client, String> {
     @Override
     public void delete(String id) {
         String sql = "DELETE FROM clienti WHERE id = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -141,7 +148,8 @@ public class ClientRepository implements Repository<Client, String> {
                      "FROM clienti c " +
                      "JOIN conturi co ON c.id = co.client_id " +
                      "GROUP BY c.id";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 rezultate.add(rs.getString("prenume") + " " + rs.getString("nume") + ": " + rs.getDouble("sold_total"));
@@ -160,7 +168,8 @@ public class ClientRepository implements Repository<Client, String> {
                      "JOIN clienti c ON co.client_id = c.id " +
                      "WHERE c.id = ? " +
                      "ORDER BY t.timestamp DESC LIMIT 5";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, clientId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -181,7 +190,8 @@ public class ClientRepository implements Repository<Client, String> {
                      "JOIN carduri ca ON co.iban = ca.iban " +
                      "GROUP BY c.id " +
                      "ORDER BY nr_carduri DESC";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 rezultate.add(rs.getString("prenume") + " " + rs.getString("nume") + ": " + rs.getInt("nr_carduri") + " carduri");

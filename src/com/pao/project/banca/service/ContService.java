@@ -10,6 +10,7 @@ import com.pao.project.banca.utils.IbanGenerator;
 import com.pao.project.banca.utils.UuidGenerator;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -138,38 +139,55 @@ public class ContService {
         if(suma > disponibil) throw new FonduriInsuficienteException(disponibil, suma);
 
         // JDBC Transaction
-        Connection conn = com.pao.project.banca.utils.DatabaseConnection.getInstance().getConnection();
-        try {
+        String sqlUpdateCont = "UPDATE conturi SET sold = ? WHERE iban = ?";
+        String sqlInsertTranzactie = "INSERT INTO tranzactii (id, iban_sursa, iban_destinatie, suma, tip_tranzactie, descriere) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = com.pao.project.banca.utils.DatabaseConnection.getInstance().getConnection()) {
             conn.setAutoCommit(false);
-            
-            sursa.setSold(sursa.getSold() - suma);
-            dest.setSold(dest.getSold() + suma);
-            
-            contRepository.update(sursa);
-            contRepository.update(dest);
+            try (PreparedStatement pstmtUpdate = conn.prepareStatement(sqlUpdateCont);
+                 PreparedStatement pstmtInsert = conn.prepareStatement(sqlInsertTranzactie)) {
+                
+                // 1. Debiteaza sursa
+                pstmtUpdate.setDouble(1, sursa.getSold() - suma);
+                pstmtUpdate.setString(2, ibanSursa);
+                pstmtUpdate.executeUpdate();
 
-            String descriere = "Transfer intre conturi";
+                // 2. Crediteaza destinatia
+                pstmtUpdate.setDouble(1, dest.getSold() + suma);
+                pstmtUpdate.setString(2, ibanDestinatie);
+                pstmtUpdate.executeUpdate();
 
-            tranzactieRepository.save(new Tranzactie(UuidGenerator.generateTranzactieID(), ibanSursa, ibanDestinatie,
-                    suma, TipTranzactie.TRANSFER_TRIMIS, descriere));
-            tranzactieRepository.save(new Tranzactie(UuidGenerator.generateTranzactieID(), ibanSursa, ibanDestinatie,
-                    suma, TipTranzactie.TRANSFER_PRIMIT, descriere));
+                String descriere = "Transfer intre conturi";
 
-            conn.commit();
-            System.out.printf("Transfer %.2f %s: %s -> %s [TRANZACTIE REUSITA]%n", suma, sursa.getMoneda(), ibanSursa, ibanDestinatie);
-        } catch (SQLException e) {
-            try {
+                // 3. Inregistreaza tranzactia sursa
+                pstmtInsert.setString(1, UuidGenerator.generateTranzactieID());
+                pstmtInsert.setString(2, ibanSursa);
+                pstmtInsert.setString(3, ibanDestinatie);
+                pstmtInsert.setDouble(4, suma);
+                pstmtInsert.setString(5, TipTranzactie.TRANSFER_TRIMIS.name());
+                pstmtInsert.setString(6, descriere);
+                pstmtInsert.executeUpdate();
+
+                // 4. Inregistreaza tranzactia destinatie
+                pstmtInsert.setString(1, UuidGenerator.generateTranzactieID());
+                pstmtInsert.setString(2, ibanSursa);
+                pstmtInsert.setString(3, ibanDestinatie);
+                pstmtInsert.setDouble(4, suma);
+                pstmtInsert.setString(5, TipTranzactie.TRANSFER_PRIMIT.name());
+                pstmtInsert.setString(6, descriere);
+                pstmtInsert.executeUpdate();
+
+                conn.commit();
+                System.out.printf("Transfer %.2f %s: %s -> %s [TRANZACTIE REUSITA]%n", suma, sursa.getMoneda(), ibanSursa, ibanDestinatie);
+            } catch (SQLException e) {
                 conn.rollback();
                 System.err.println("Tranzactie esuata. Rollback executat: " + e.getMessage());
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        } finally {
-            try {
+                throw e;
+            } finally {
                 conn.setAutoCommit(true);
-            } catch (SQLException e) {
-                e.printStackTrace();
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
     public double getSold(String iban) throws ContNegasitException {

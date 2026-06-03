@@ -6,6 +6,7 @@ import com.pao.project.banca.models.ContEconomii;
 import com.pao.project.banca.models.Moneda;
 import com.pao.project.banca.utils.DatabaseConnection;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,7 +18,8 @@ public class ContRepository implements Repository<Cont, String> {
     @Override
     public void save(Cont entity) {
         String sql = "INSERT INTO conturi (iban, client_id, tip_cont, moneda, sold, activ, nume_banca) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, entity.getIban());
             pstmt.setString(2, entity.getIdClient());
             pstmt.setString(3, entity.getTipCont());
@@ -34,7 +36,8 @@ public class ContRepository implements Repository<Cont, String> {
     @Override
     public Optional<Cont> findById(String iban) {
         String sql = "SELECT * FROM conturi WHERE iban = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, iban);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -65,7 +68,8 @@ public class ContRepository implements Repository<Cont, String> {
     public List<Cont> findAll() {
         List<Cont> conturi = new ArrayList<>();
         String sql = "SELECT * FROM conturi";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 String tipCont = rs.getString("tip_cont");
@@ -93,7 +97,8 @@ public class ContRepository implements Repository<Cont, String> {
     @Override
     public void update(Cont entity) {
         String sql = "UPDATE conturi SET sold = ?, activ = ?, nume_banca = ? WHERE iban = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setDouble(1, entity.getSold());
             pstmt.setBoolean(2, entity.isActiv());
             pstmt.setString(3, entity.getNumeBanca());
@@ -107,7 +112,8 @@ public class ContRepository implements Repository<Cont, String> {
     @Override
     public void delete(String iban) {
         String sql = "DELETE FROM conturi WHERE iban = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, iban);
             pstmt.executeUpdate();
         } catch (SQLException e) {

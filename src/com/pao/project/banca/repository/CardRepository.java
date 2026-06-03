@@ -3,6 +3,7 @@ package com.pao.project.banca.repository;
 import com.pao.project.banca.models.Card;
 import com.pao.project.banca.utils.DatabaseConnection;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,7 +15,8 @@ public class CardRepository implements Repository<Card, String> {
     @Override
     public void save(Card entity) {
         String sql = "INSERT INTO carduri (numar_card, iban, pin, tip_card, nume_detinator, status) VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, entity.getNumarCard());
             pstmt.setString(2, entity.getIban());
             pstmt.setString(3, entity.getPIN());
@@ -30,7 +32,8 @@ public class CardRepository implements Repository<Card, String> {
     @Override
     public Optional<Card> findById(String numarCard) {
         String sql = "SELECT * FROM carduri WHERE numar_card = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, numarCard);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -55,7 +58,8 @@ public class CardRepository implements Repository<Card, String> {
     public List<Card> findAll() {
         List<Card> carduri = new ArrayList<>();
         String sql = "SELECT * FROM carduri";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 Card card = new Card(
@@ -77,7 +81,8 @@ public class CardRepository implements Repository<Card, String> {
     @Override
     public void update(Card entity) {
         String sql = "UPDATE carduri SET status = ?, pin = ? WHERE numar_card = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, entity.getStatus().name());
             pstmt.setString(2, entity.getPIN());
             pstmt.setString(3, entity.getNumarCard());
@@ -90,7 +95,8 @@ public class CardRepository implements Repository<Card, String> {
     @Override
     public void delete(String numarCard) {
         String sql = "DELETE FROM carduri WHERE numar_card = ?";
-        try (PreparedStatement pstmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, numarCard);
             pstmt.executeUpdate();
         } catch (SQLException e) {

@@ -57,8 +57,7 @@ public class ClientService {
     }
 
     public void asociazaCont(String idClient, String iban) throws ClientNegasitException {
-        // In the DB version, we don't necessarily need to update the client object
-        // because the 'conturi' table has a 'client_id' FK.
+
     }
 
     public List<String> getRapoarteSoldTotal() {
