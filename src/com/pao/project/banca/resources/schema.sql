@@ -1,4 +1,10 @@
-CREATE TABLE IF NOT EXISTS adrese (
+DROP TABLE IF EXISTS tranzactii;
+DROP TABLE IF EXISTS carduri;
+DROP TABLE IF EXISTS conturi;
+DROP TABLE IF EXISTS clienti;
+DROP TABLE IF EXISTS adrese;
+
+CREATE TABLE adrese (
     id VARCHAR(50) PRIMARY KEY,
     strada VARCHAR(100),
     numar VARCHAR(10),
@@ -8,7 +14,7 @@ CREATE TABLE IF NOT EXISTS adrese (
     tara VARCHAR(50)
 );
 
-CREATE TABLE IF NOT EXISTS clienti (
+CREATE TABLE clienti (
     id VARCHAR(50) PRIMARY KEY,
     nume VARCHAR(50),
     prenume VARCHAR(50),
@@ -19,7 +25,7 @@ CREATE TABLE IF NOT EXISTS clienti (
     FOREIGN KEY (adresa_id) REFERENCES adrese(id)
 );
 
-CREATE TABLE IF NOT EXISTS conturi (
+CREATE TABLE conturi (
     iban VARCHAR(34) PRIMARY KEY,
     client_id VARCHAR(50),
     tip_cont VARCHAR(20),
@@ -30,7 +36,7 @@ CREATE TABLE IF NOT EXISTS conturi (
     FOREIGN KEY (client_id) REFERENCES clienti(id)
 );
 
-CREATE TABLE IF NOT EXISTS carduri (
+CREATE TABLE carduri (
     numar_card VARCHAR(16) PRIMARY KEY,
     iban VARCHAR(34),
     pin VARCHAR(4),
@@ -40,7 +46,7 @@ CREATE TABLE IF NOT EXISTS carduri (
     FOREIGN KEY (iban) REFERENCES conturi(iban)
 );
 
-CREATE TABLE IF NOT EXISTS tranzactii (
+CREATE TABLE tranzactii (
     id VARCHAR(50) PRIMARY KEY,
     iban_sursa VARCHAR(34),
     iban_destinatie VARCHAR(34),
