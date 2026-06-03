@@ -5,7 +5,6 @@ import com.pao.project.banca.models.*;
 import com.pao.project.banca.service.*;
 import com.pao.project.banca.utils.DatabaseInitializer;
 
-import javax.swing.*;
 import java.util.List;
 
 public class Main {
@@ -21,16 +20,10 @@ public class Main {
         // 2. Run Automated Test Cases
         runAutomatedTests();
 
-        // 3. Launch GUI
-        System.out.println("\n>>> Lansare Interfata Grafica...");
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
-
-        SwingUtilities.invokeLater(() -> {
-            BancaGUI gui = new BancaGUI();
-            gui.setVisible(true);
-        });
+        // 3. Launch CLI
+        System.out.println("\n>>> Lansare Interfata CLI...");
+        BancaCLI cli = new BancaCLI();
+        cli.start();
     }
 
     private static void sectiune(String titlu) {
